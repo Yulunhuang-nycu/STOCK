@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import logging
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from src.core.clock import TAIPEI
 from src.data.feed_base import MarketDataFeed, Tick
@@ -13,6 +14,9 @@ from src.strategy.position import PositionManager
 from src.strategy.risk import RiskManager
 from src.strategy.signals.base import SignalGenerator
 from src.storage.db import SignalsDB
+
+if TYPE_CHECKING:
+    from src.storage.parquet_writer import TickParquetWriter
 
 log = logging.getLogger("stock.engine")
 
@@ -26,6 +30,7 @@ class Engine:
     risk_mgr: RiskManager
     executor: Executor
     signals_db: SignalsDB
+    tick_writer: TickParquetWriter | None = None
     run_id: str = ""
 
     def __post_init__(self) -> None:
@@ -34,6 +39,8 @@ class Engine:
 
     def _on_tick(self, tick: Tick) -> None:
         taipei_time = tick.ts.astimezone(TAIPEI)
+        if self.tick_writer is not None:
+            self.tick_writer.write(tick)
         feats = self.features.update(tick)
         if feats is None:
             self.position_mgr.on_tick(tick, self._submit_exit, current_time=taipei_time)
@@ -61,4 +68,8 @@ class Engine:
     def run(self) -> None:
         log.info("Engine starting | run_id=%s", self.run_id)
         self.feed.on_tick(self._on_tick)
-        self.feed.start()
+        try:
+            self.feed.start()
+        finally:
+            if self.tick_writer is not None:
+                self.tick_writer.close()
