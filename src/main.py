@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import argparse
+import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -29,12 +31,27 @@ def build_feed(cfg):
             seed=fake_cfg.get("seed", 42),
         )
     elif feed_type == "fugle_live":
-        import os
         api_key = os.environ.get("FUGLE_API_KEY", "")
         if not api_key:
             raise ValueError("FUGLE_API_KEY not set in .env")
         from src.data.fugle_feed import FugleFeed
         return FugleFeed(api_key=api_key)
+    elif feed_type == "fugle_live_multi":
+        multi_cfg = cfg.get("data_feed", "fugle_live_multi", default={}) or {}
+        keys_file = str(multi_cfg.get("keys_file", "") or "").strip()
+        if keys_file:
+            api_keys = _read_api_keys_from_file(keys_file)
+        else:
+            api_keys = _read_api_keys_from_env()
+        if not api_keys:
+            raise ValueError(
+                "fugle_live_multi 未讀到任何 API key，請設定 keys_file 或 FUGLE_API_KEY_1..N"
+            )
+        from src.data.multi_fugle_feed import MultiFugleFeed
+        return MultiFugleFeed(
+            api_keys=api_keys,
+            symbols_per_key=int(multi_cfg.get("symbols_per_key", 5)),
+        )
     elif feed_type == "replay":
         replay_cfg = cfg.get("data_feed", "replay", default={}) or {}
         from src.data.replay_feed import ReplayFeed
@@ -44,6 +61,28 @@ def build_feed(cfg):
             speed_multiplier=replay_cfg.get("speed_multiplier", 1.0),
         )
     raise NotImplementedError(f"data_feed.type={feed_type!r} not implemented yet")
+
+
+def _read_api_keys_from_file(path: str) -> list[str]:
+    keys: list[str] = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        keys.append(stripped)
+    return keys
+
+
+def _read_api_keys_from_env() -> list[str]:
+    keys: list[str] = []
+    index = 1
+    while True:
+        value = os.environ.get(f"FUGLE_API_KEY_{index}", "").strip()
+        if not value:
+            break
+        keys.append(value)
+        index += 1
+    return keys
 
 
 def build_signal_generator(cfg):
