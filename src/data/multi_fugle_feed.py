@@ -66,14 +66,14 @@ class MultiFugleFeed(MarketDataFeed):
         feeds: list[FugleFeed] = []
         threads: list[threading.Thread] = []
         for idx, (api_key, symbols) in enumerate(self._key_symbol_groups):
-            shard_label = f"key#{idx + 1}({self._mask_key(api_key)})"
-            log.info("MultiFugleFeed start shard %s symbols=%s", shard_label, symbols)
+            shard_id = idx + 1
+            log.info("MultiFugleFeed start shard#%s symbol_count=%s", shard_id, len(symbols))
             feed = FugleFeed(api_key=api_key, reconnect_delay_sec=self._reconnect_delay_sec)
             feed.subscribe(symbols)
             feed.on_tick(self._queue.put)
             thread = threading.Thread(
                 target=self._run_shard,
-                args=(feed, shard_label),
+                args=(feed, shard_id),
                 daemon=True,
                 name=f"multi-fugle-{idx + 1}",
             )
@@ -111,16 +111,10 @@ class MultiFugleFeed(MarketDataFeed):
             except Exception as exc:
                 log.warning("MultiFugleFeed shard stop failed: %s", exc)
 
-    def _run_shard(self, feed: FugleFeed, shard_label: str) -> None:
+    def _run_shard(self, feed: FugleFeed, shard_id: int) -> None:
         try:
             feed.start()
         except Exception as exc:
-            log.warning("MultiFugleFeed shard %s failed: %s", shard_label, exc)
+            log.warning("MultiFugleFeed shard#%s failed: %s", shard_id, exc)
             if not self._stop_event.is_set():
                 self.stop()
-
-    @staticmethod
-    def _mask_key(api_key: str) -> str:
-        if not api_key:
-            return "****"
-        return f"{api_key[:4]}…"
