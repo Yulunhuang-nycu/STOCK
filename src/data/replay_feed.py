@@ -79,6 +79,10 @@ class ReplayFeed(MarketDataFeed):
                 if sleep_sec > 0:
                     time.sleep(sleep_sec)
 
+            size = getattr(row, "size", 0)
+            cum_volume = getattr(row, "cum_volume", 0)
+            tick_type = getattr(row, "tick_type", 0)
+            serial = getattr(row, "serial", 0)
             tick = Tick(
                 symbol=str(row.symbol),
                 ts=ts,
@@ -86,6 +90,10 @@ class ReplayFeed(MarketDataFeed):
                 volume=int(row.volume),
                 bid=float(row.bid),
                 ask=float(row.ask),
+                size=int(0 if pd.isna(size) else size),
+                cum_volume=int(0 if pd.isna(cum_volume) else cum_volume),
+                tick_type=int(0 if pd.isna(tick_type) else tick_type),
+                serial=int(0 if pd.isna(serial) else serial),
             )
             self._callback(tick)
             prev_ts = ts

@@ -21,11 +21,14 @@ class FakeFeed(MarketDataFeed):
         self._stop = False
         self._max_ticks = max_ticks
         self._prices: dict[str, float] = {}
+        self._cum_volumes: dict[str, int] = {}
+        self._serial = 0
 
     def subscribe(self, symbols: list[str]) -> None:
         self._symbols = list(symbols)
         for s in symbols:
             self._prices[s] = self._rng.uniform(20.0, 600.0)
+            self._cum_volumes[s] = 0
 
     def on_tick(self, callback: TickCallback) -> None:
         self._callback = callback
@@ -42,13 +45,21 @@ class FakeFeed(MarketDataFeed):
             sym = self._rng.choice(self._symbols)
             self._prices[sym] *= 1 + self._rng.uniform(-0.003, 0.003)
             price = round(self._prices[sym], 2)
+            volume = self._rng.randint(1, 50)
+            size = volume * 1000
+            self._cum_volumes[sym] += volume
+            self._serial += 1
             tick = Tick(
                 symbol=sym,
                 ts=dt.datetime.now(tz=UTC),
                 price=price,
-                volume=self._rng.randint(1, 50),
+                volume=volume,
                 bid=round(price * 0.999, 2),
                 ask=round(price * 1.001, 2),
+                size=size,
+                cum_volume=self._cum_volumes[sym],
+                tick_type=self._rng.choice([-1, 1]),
+                serial=self._serial,
             )
             self._callback(tick)
             emitted += 1
