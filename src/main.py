@@ -3,12 +3,17 @@ from __future__ import annotations
 
 import argparse
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from src.core.config import load_config
 from src.core.engine import Engine
 from src.core.logging_setup import setup_logging
 from src.data.fake_feed import FakeFeed
 from src.execution.dryrun import DryRunExecutor
 from src.storage.db import SignalsDB
+from src.storage.parquet_writer import TickParquetWriter
 from src.strategy.features import FeatureBuilder
 from src.strategy.position import PositionManager
 from src.strategy.risk import RiskManager
@@ -22,6 +27,21 @@ def build_feed(cfg):
         return FakeFeed(
             tick_interval_ms=fake_cfg.get("tick_interval_ms", 200),
             seed=fake_cfg.get("seed", 42),
+        )
+    elif feed_type == "fugle_live":
+        import os
+        api_key = os.environ.get("FUGLE_API_KEY", "")
+        if not api_key:
+            raise ValueError("FUGLE_API_KEY not set in .env")
+        from src.data.fugle_feed import FugleFeed
+        return FugleFeed(api_key=api_key)
+    elif feed_type == "replay":
+        replay_cfg = cfg.get("data_feed", "replay", default={}) or {}
+        from src.data.replay_feed import ReplayFeed
+        return ReplayFeed(
+            date=replay_cfg.get("date", ""),
+            base_dir=cfg.get("storage", "ticks_dir", default="data/ticks"),
+            speed_multiplier=replay_cfg.get("speed_multiplier", 1.0),
         )
     raise NotImplementedError(f"data_feed.type={feed_type!r} not implemented yet")
 
@@ -81,6 +101,8 @@ def main() -> None:
     )
     executor = build_executor(cfg)
     signals_db = SignalsDB(cfg.get("storage", "signals_db", default="db/signals.sqlite"))
+    ticks_dir = cfg.get("storage", "ticks_dir", default="data/ticks")
+    tick_writer = TickParquetWriter(base_dir=ticks_dir)
 
     engine = Engine(
         feed=feed,
@@ -90,6 +112,7 @@ def main() -> None:
         risk_mgr=risk_mgr,
         executor=executor,
         signals_db=signals_db,
+        tick_writer=tick_writer,
     )
     engine.run()
 

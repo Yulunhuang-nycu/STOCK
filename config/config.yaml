@@ -64,6 +64,11 @@ data_feed:
   fake:
     tick_interval_ms: 200
     seed: 42
+  fugle_live:
+    api_key_env: FUGLE_API_KEY  # 從環境變數讀取，不要 hard-code
+  replay:
+    date: "2025-06-04"
+    speed_multiplier: 0.0       # 0 = 全速回放，適合回測
 
 storage:
   signals_db: db/signals.sqlite
