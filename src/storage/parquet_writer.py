@@ -32,8 +32,8 @@ class TickParquetWriter:
 
         # key: (date_str_taipei, symbol) -> list of dicts
         self._buffers: dict[tuple[str, str], list[dict]] = defaultdict(list)
-        # key: (date_str_taipei, symbol) -> last flush time
-        self._last_flush: dict[tuple[str, str], float] = defaultdict(time.time)
+        # key: (date_str_taipei, symbol) -> last flush time (monotonic clock)
+        self._last_flush: dict[tuple[str, str], float] = defaultdict(time.monotonic)
 
     # ------------------------------------------------------------------
     # Public API
