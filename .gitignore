@@ -12,7 +12,7 @@ venv/
 .DS_Store
 
 # Data & artifacts
-data/
+/data/
 models/
 logs/
 db/
