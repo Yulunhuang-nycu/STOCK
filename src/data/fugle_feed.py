@@ -88,7 +88,7 @@ class FugleFeed(MarketDataFeed):
     def _handle_connect(self) -> None:
         log.info("Fugle websocket connected")
 
-    def _handle_disconnect(self, code: int, message: str) -> None:
+    def _handle_disconnect(self, code: int | None = None, message: str | None = None) -> None:
         log.warning("Fugle websocket disconnected code=%s message=%s", code, message)
         if not self._stop_event.is_set():
             self._schedule_reconnect()

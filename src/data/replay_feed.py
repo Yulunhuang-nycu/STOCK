@@ -42,9 +42,18 @@ class ReplayFeed(MarketDataFeed):
 
         self._stop = False
         date_dir = self._base_dir / self._date
+        if not date_dir.exists():
+            msg = f"Replay parquet not found: {date_dir.resolve()}"
+            log.error(msg)
+            raise FileNotFoundError(msg)
+
         symbols = list(self._symbols)
         if not symbols:
             symbols = sorted(p.stem for p in date_dir.glob("*.parquet"))
+            if not symbols:
+                msg = f"Replay parquet not found: {date_dir.resolve()}"
+                log.error(msg)
+                raise FileNotFoundError(msg)
 
         dfs: list[pd.DataFrame] = []
         for symbol in symbols:
