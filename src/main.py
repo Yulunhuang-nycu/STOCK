@@ -12,7 +12,7 @@ from src.storage.db import SignalsDB
 from src.strategy.features import FeatureBuilder
 from src.strategy.position import PositionManager
 from src.strategy.risk import RiskManager
-from src.strategy.signals.rule_model import DummyRuleModel
+from src.strategy.signals.rule_model import MomentumLongRule
 
 
 def build_feed(cfg):
@@ -30,7 +30,13 @@ def build_signal_generator(cfg):
     sig_type = cfg.get("signal", "type", default="rule")
     if sig_type == "rule":
         rule_cfg = cfg.get("signal", "rule", default={}) or {}
-        return DummyRuleModel(min_return_pct=rule_cfg.get("min_momentum_3m_pct", 0.3))
+        return MomentumLongRule(
+            require_ma_bullish=rule_cfg.get("require_ma_bullish", True),
+            min_kd_golden_cross=rule_cfg.get("min_kd_golden_cross", True),
+            min_vol_ratio=rule_cfg.get("min_vol_ratio", 1.5),
+            require_macd_positive=rule_cfg.get("require_macd_positive", True),
+            min_price_vs_ma20_pct=rule_cfg.get("min_price_vs_ma20_pct", -2.0),
+        )
     raise NotImplementedError(f"signal.type={sig_type!r} not implemented yet")
 
 
@@ -63,11 +69,15 @@ def main() -> None:
     position_mgr = PositionManager(
         stop_loss_pct=cfg.get("position", "stop_loss_pct", default=1.0),
         take_profit_pct=cfg.get("position", "take_profit_pct", default=1.7),
+        force_exit=cfg.get("market", "force_exit", default="13:00"),
     )
     risk_mgr = RiskManager(
         total_capital=cfg.get("risk", "total_capital", default=500000),
         max_lot_per_symbol=cfg.get("risk", "max_lot_per_symbol", default=2),
         max_open_positions=cfg.get("risk", "max_open_positions", default=5),
+        entry_cutoff=cfg.get("market", "entry_cutoff", default="09:45"),
+        force_exit=cfg.get("market", "force_exit", default="13:00"),
+        timezone=cfg.get("market", "timezone", default="Asia/Taipei"),
     )
     executor = build_executor(cfg)
     signals_db = SignalsDB(cfg.get("storage", "signals_db", default="db/signals.sqlite"))

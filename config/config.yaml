@@ -34,6 +34,11 @@ signal:
     min_volume_ratio: 3.0
     min_gap_pct: 0.8
     min_momentum_3m_pct: 0.3
+    min_kd_golden_cross: true
+    min_vol_ratio: 1.5
+    require_ma_bullish: true
+    require_macd_positive: true
+    min_price_vs_ma20_pct: -2.0
   lgbm:
     model_path: models/lgbm_entry_v0.1.pkl
     threshold: 0.65

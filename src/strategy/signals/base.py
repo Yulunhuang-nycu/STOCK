@@ -11,7 +11,7 @@ from src.core.clock import UTC
 @dataclass(frozen=True)
 class Signal:
     symbol: str
-    side: str                    # "entry_short" | "exit"
+    side: str                    # "entry_long" | "entry_short" | "exit"
     score: float
     reason: str
     features: dict = field(default_factory=dict)
