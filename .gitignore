@@ -6,6 +6,15 @@ __pycache__/
 venv/
 .env
 
+# Secrets / API keys — NEVER commit real keys
+.env
+.env.*
+!.env.example
+scripts/KEY.txt
+KEY.txt
+*.key
+keys.txt
+
 # IDE
 .vscode/
 .idea/
