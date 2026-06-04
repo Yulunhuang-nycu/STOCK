@@ -15,6 +15,10 @@ class Tick:
     volume: int
     bid: float = 0.0
     ask: float = 0.0
+    size: int = 0
+    cum_volume: int = 0
+    tick_type: int = 0
+    serial: int = 0
 
 
 TickCallback = Callable[[Tick], None]

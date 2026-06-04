@@ -13,6 +13,12 @@ from src.data.feed_base import MarketDataFeed, Tick, TickCallback
 
 log = logging.getLogger("stock.data.fugle")
 
+FUGLE_TICK_INNER = 1  # 內盤(賣方主動)
+FUGLE_TICK_OUTER = 2  # 外盤(買方主動)
+TICK_TYPE_SELL = -1
+TICK_TYPE_BUY = 1
+TICK_TYPE_UNKNOWN = 0
+
 
 class FugleFeed(MarketDataFeed):
     def __init__(self, api_key: str, reconnect_delay_sec: float = 5.0) -> None:
@@ -112,6 +118,14 @@ class FugleFeed(MarketDataFeed):
 
             data = payload["data"]
             ts = datetime.fromtimestamp(data["time"] / 1_000_000, tz=UTC)
+            tick_raw = data.get("tick")
+            if tick_raw == FUGLE_TICK_INNER:
+                tick_type = TICK_TYPE_SELL
+            elif tick_raw == FUGLE_TICK_OUTER:
+                tick_type = TICK_TYPE_BUY
+            else:
+                tick_type = TICK_TYPE_UNKNOWN
+
             tick = Tick(
                 symbol=str(data["symbol"]),
                 ts=ts,
@@ -119,6 +133,10 @@ class FugleFeed(MarketDataFeed):
                 volume=int(data["size"] / 1000),
                 bid=float(data.get("bid", 0.0) or 0.0),
                 ask=float(data.get("ask", 0.0) or 0.0),
+                size=int(data.get("size", 0) or 0),
+                cum_volume=int(data.get("volume", 0) or 0),
+                tick_type=tick_type,
+                serial=int(data.get("serial", 0) or 0),
             )
             self._callback(tick)
         except Exception as exc:

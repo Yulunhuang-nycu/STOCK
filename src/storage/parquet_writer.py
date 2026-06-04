@@ -52,6 +52,10 @@ class TickParquetWriter:
             "volume": int(tick.volume),
             "bid": float(tick.bid),
             "ask": float(tick.ask),
+            "size": int(tick.size),
+            "cum_volume": int(tick.cum_volume),
+            "tick_type": int(tick.tick_type),
+            "serial": int(tick.serial),
         }
         self._buffers[key].append(row)
 
@@ -81,7 +85,22 @@ class TickParquetWriter:
         out_path = self._base_dir / date_str / f"{symbol}.parquet"
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
-        new_df = pd.DataFrame(rows, columns=["symbol", "ts_utc", "ts_taipei", "price", "volume", "bid", "ask"])
+        new_df = pd.DataFrame(
+            rows,
+            columns=[
+                "symbol",
+                "ts_utc",
+                "ts_taipei",
+                "price",
+                "volume",
+                "bid",
+                "ask",
+                "size",
+                "cum_volume",
+                "tick_type",
+                "serial",
+            ],
+        )
 
         if out_path.exists():
             try:
