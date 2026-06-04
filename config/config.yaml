@@ -158,3 +158,26 @@ storage:
 logging:
   level: INFO
   file: logs/app.log
+
+# ── Phase 2: offline feature pipeline ─────────────────────────────────────
+feature_pipeline:
+  ticks_dir: data/ticks                      # input root (YYYY-MM-DD sub-dirs)
+  output_dir: data/features                  # per-symbol output root
+  label_minutes: 3                           # future N-min return label
+  pooled: false                              # also write a single pooled parquet?
+  pooled_output_path: data/features/pooled.parquet
+  drop_na_labels: true                       # drop rows where label is NaN
+  # Normalisation strategy applied to absolute-value columns when pooling
+  # across symbols with different price scales.
+  # Options: none | per_symbol_zscore
+  normalization_strategy: per_symbol_zscore
+  # Columns that carry absolute price/volume values (not scale-invariant).
+  # These are z-score normalised per symbol when normalization_strategy is set.
+  absolute_value_cols:
+    - last_price
+    - sma5
+    - ma5
+    - ma20
+    - ma60
+    - vol_ma5
+    - vol_sum_recent
