@@ -133,12 +133,15 @@ executor:
   type: dryrun                 # dryrun | paper | notify | broker
 
 data_feed:
-  type: fugle_live                   # fake | fugle_live | replay
+  type: fugle_live                   # fake | fugle_live | fugle_live_multi | replay
   fake:
     tick_interval_ms: 200
     seed: 42
   fugle_live:
     api_key_env: FUGLE_API_KEY  # 從環境變數讀取，不要 hard-code
+  fugle_live_multi:
+    keys_file: scripts/KEY.txt  # 一行一把 key;留空則改讀 FUGLE_API_KEY_1..N
+    symbols_per_key: 5          # Fugle 基本方案每把 key 上限 5 檔
   replay:
     date: "2025-06-04"
     speed_multiplier: 0.0       # 0 = 全速回放，適合回測
