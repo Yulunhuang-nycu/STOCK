@@ -1,0 +1,22 @@
+# Core
+pyyaml>=6.0
+python-dotenv>=1.0
+
+# Data
+numpy>=1.26
+pandas>=2.2
+pyarrow>=15.0
+
+# Logging
+rich>=13.7
+
+# Testing
+pytest>=8.0
+
+# --- Added in later phases (kept commented) ---
+# fugle-marketdata>=1.0      # Phase 1: live feed
+# yfinance>=0.2              # Phase 2: bulk historical for multi-symbol training
+# lightgbm>=4.0              # Phase 3: ML model
+# scikit-learn>=1.4
+# vectorbt>=0.26             # Phase 3: backtest
+# requests>=2.32             # Phase 5: notifications

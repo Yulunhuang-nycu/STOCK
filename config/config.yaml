@@ -1,0 +1,72 @@
+# ============================================================
+# STOCK — main configuration
+# Every tunable parameter MUST live here, not in code.
+# ============================================================
+
+market:
+  timezone: Asia/Taipei
+  trading_hours: ["09:00", "13:30"]
+  entry_cutoff: "09:45"
+  force_exit: "13:00"
+
+universe:
+  source: static               # static | dynamic(AI-selected)
+  # Phase-1 universe: same sector clusters so patterns generalise.
+  symbols:
+    # Motherboard / GPU cluster
+    - "2377"  # 微星
+    - "2357"  # 華碩
+    - "2376"  # 技嘉
+    # Industrial PC cluster
+    - "2395"  # 研華
+    - "6216"  # 居易
+    - "3563"  # 牧德
+  min_avg_volume_klots: 5
+
+features:
+  vwap_window_min: 5
+  momentum_windows_min: [1, 3, 5]
+  volume_ratio_lookback_days: 20
+
+signal:
+  type: rule                   # rule | lgbm
+  rule:
+    min_volume_ratio: 3.0
+    min_gap_pct: 0.8
+    min_momentum_3m_pct: 0.3
+  lgbm:
+    model_path: models/lgbm_entry_v0.1.pkl
+    threshold: 0.65
+
+position:
+  stop_loss_pct: 1.0
+  take_profit_pct: 1.7
+  trailing_take_profit: true
+  trailing_drawdown_pct: 0.5
+
+risk:
+  total_capital: 500000
+  max_lot_per_symbol: 2
+  max_lots_per_round: 1
+  max_daily_loss: 10000
+  max_open_positions: 5
+
+executor:
+  type: dryrun                 # dryrun | paper | notify | broker
+
+data_feed:
+  type: fake                   # fake | fugle_live | replay
+  fake:
+    tick_interval_ms: 200
+    seed: 42
+
+storage:
+  signals_db: db/signals.sqlite
+  trades_db: db/trades.sqlite
+  runs_db: db/runs.sqlite
+  ticks_dir: data/ticks
+  bars_dir: data/bars
+
+logging:
+  level: INFO
+  file: logs/app.log
