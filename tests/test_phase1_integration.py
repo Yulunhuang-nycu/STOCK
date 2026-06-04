@@ -165,11 +165,10 @@ def test_engine_with_replay_feed(tmp_path: Path) -> None:
         feed=replay_feed,
         features=FeatureBuilder(),
         signal_gen=MomentumLongRule(
-            require_ma_bullish=True,
-            min_kd_golden_cross=True,
-            min_vol_ratio=1.5,
-            require_macd_positive=True,
-            min_price_vs_ma20_pct=-2.0,
+            min_conditions_met=3,
+            vol_ratio_threshold=1.5,
+            momentum_3m_threshold=0.2,
+            price_vs_ma20_min=-2.0,
         ),
         position_mgr=PositionManager(
             stop_loss_pct=1.0,

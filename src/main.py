@@ -51,11 +51,10 @@ def build_signal_generator(cfg):
     if sig_type == "rule":
         rule_cfg = cfg.get("signal", "rule", default={}) or {}
         return MomentumLongRule(
-            require_ma_bullish=rule_cfg.get("require_ma_bullish", True),
-            min_kd_golden_cross=rule_cfg.get("min_kd_golden_cross", True),
-            min_vol_ratio=rule_cfg.get("min_vol_ratio", 1.5),
-            require_macd_positive=rule_cfg.get("require_macd_positive", True),
-            min_price_vs_ma20_pct=rule_cfg.get("min_price_vs_ma20_pct", -2.0),
+            min_conditions_met=rule_cfg.get("min_conditions_met", 3),
+            vol_ratio_threshold=rule_cfg.get("vol_ratio_threshold", 1.5),
+            momentum_3m_threshold=rule_cfg.get("momentum_3m_threshold", 0.2),
+            price_vs_ma20_min=rule_cfg.get("price_vs_ma20_min", -2.0),
         )
     raise NotImplementedError(f"signal.type={sig_type!r} not implemented yet")
 

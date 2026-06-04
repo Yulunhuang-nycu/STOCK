@@ -57,9 +57,52 @@ def test_all_feature_values_are_float():
     assert all(isinstance(v, float) for v in feats.values())
 
 
-def test_momentum_long_rule_requires_all_enabled_conditions():
-    rule = MomentumLongRule(min_vol_ratio=1.5, min_price_vs_ma20_pct=-2.0)
-    assert rule.generate("2330", {"kd_golden_cross": 1.0, "ma_bullish": 1.0, "vol_ratio_vs5": 1.2, "macd_hist": 0.1, "price_vs_ma20_pct": 0.0}) is None
-    sig = rule.generate("2330", {"kd_golden_cross": 1.0, "ma_bullish": 1.0, "vol_ratio_vs5": 1.6, "macd_hist": 0.1, "price_vs_ma20_pct": 0.0})
+def test_momentum_long_rule_below_min_conditions_returns_none():
+    rule = MomentumLongRule(min_conditions_met=3)
+    # Only 2 conditions met (ma_bullish + kd_golden_cross) -> below threshold.
+    sig = rule.generate(
+        "2330",
+        {
+            "vol_ratio_vs5": 1.0,        # < 1.5  -> fail
+            "ma_bullish": 1.0,           # pass
+            "kd_golden_cross": 1.0,      # pass
+            "price_vs_ma20_pct": -5.0,   # <= -2.0 -> fail
+            "momentum_3m": 0.0,          # <= 0.2  -> fail
+        },
+    )
+    assert sig is None
+
+
+def test_momentum_long_rule_emits_when_min_conditions_met():
+    rule = MomentumLongRule(min_conditions_met=3)
+    # Exactly 3 conditions met -> score = 0.6.
+    sig = rule.generate(
+        "2330",
+        {
+            "vol_ratio_vs5": 1.6,        # pass
+            "ma_bullish": 1.0,           # pass
+            "kd_golden_cross": 1.0,      # pass
+            "price_vs_ma20_pct": -5.0,   # fail
+            "momentum_3m": 0.0,          # fail
+        },
+    )
     assert sig is not None
     assert sig.side == "entry_long"
+    assert sig.score == 0.6
+    assert sig.model_version == "rule-momentum-long-0.1"
+
+
+def test_momentum_long_rule_all_conditions_score_one():
+    rule = MomentumLongRule(min_conditions_met=3)
+    sig = rule.generate(
+        "2330",
+        {
+            "vol_ratio_vs5": 2.0,        # pass
+            "ma_bullish": 1.0,           # pass
+            "kd_golden_cross": 1.0,      # pass
+            "price_vs_ma20_pct": 1.0,    # pass
+            "momentum_3m": 0.5,          # pass
+        },
+    )
+    assert sig is not None
+    assert sig.score == 1.0

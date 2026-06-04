@@ -30,15 +30,15 @@ features:
 
 signal:
   type: rule                   # rule | lgbm
+  # The rule strategy is used to GENERATE TRAINING DATA, not as the final
+  # trading strategy, so the conditions are intentionally loose: a signal
+  # fires when at least `min_conditions_met` of 5 conditions hold, and the
+  # `score` column records met/5 (the condition-satisfaction level).
   rule:
-    min_volume_ratio: 3.0
-    min_gap_pct: 0.8
-    min_momentum_3m_pct: 0.3
-    min_kd_golden_cross: true
-    min_vol_ratio: 1.5
-    require_ma_bullish: true
-    require_macd_positive: true
-    min_price_vs_ma20_pct: -2.0
+    min_conditions_met: 3        # 至少幾個條件滿足
+    vol_ratio_threshold: 1.5
+    momentum_3m_threshold: 0.2
+    price_vs_ma20_min: -2.0
   lgbm:
     model_path: models/lgbm_entry_v0.1.pkl
     threshold: 0.65
