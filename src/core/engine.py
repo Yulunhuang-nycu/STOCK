@@ -5,6 +5,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 
+from src.core.clock import TAIPEI
 from src.data.feed_base import MarketDataFeed, Tick
 from src.execution.base import Executor
 from src.strategy.features import FeatureBuilder
@@ -32,18 +33,19 @@ class Engine:
             self.run_id = uuid.uuid4().hex[:12]
 
     def _on_tick(self, tick: Tick) -> None:
+        taipei_time = tick.ts.astimezone(TAIPEI)
         feats = self.features.update(tick)
         if feats is None:
-            self.position_mgr.on_tick(tick, self._submit_exit)
+            self.position_mgr.on_tick(tick, self._submit_exit, current_time=taipei_time)
             return
 
         sig = self.signal_gen.generate(tick.symbol, feats)
-        self.position_mgr.on_tick(tick, self._submit_exit)
+        self.position_mgr.on_tick(tick, self._submit_exit, current_time=taipei_time)
 
         if sig is None:
             return
 
-        ok, reason = self.risk_mgr.check(sig, self.position_mgr.snapshot())
+        ok, reason = self.risk_mgr.check(sig, self.position_mgr.snapshot(), current_time=taipei_time)
         self.signals_db.insert(self.run_id, sig, risk_passed=ok, risk_reason=reason)
         if not ok:
             log.info("Signal REJECTED by risk: %s reason=%s", sig, reason)
