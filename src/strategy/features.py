@@ -19,6 +19,7 @@ class _SymbolState:
     ema26_prev: float | None = None
     macd_signal_prev: float | None = None
     macd_hist_prev: float | None = None
+    prev_cum_volume: int = 0  # for computing incremental volume from cum_volume diff
 
 
 class FeatureBuilder:
@@ -41,7 +42,14 @@ class FeatureBuilder:
         if st.first_price is None:
             st.first_price = tick.price
         st.prices.append(tick.price)
-        st.volumes.append(tick.volume)
+
+        # Prefer cum_volume diff (correct for Fugle trades channel); fall back to tick.volume
+        if tick.cum_volume > 0:
+            inc_vol = max(0, tick.cum_volume - st.prev_cum_volume)
+            st.prev_cum_volume = tick.cum_volume
+        else:
+            inc_vol = tick.volume
+        st.volumes.append(inc_vol)
 
         prices = list(st.prices)
         volumes = list(st.volumes)
@@ -85,7 +93,7 @@ class FeatureBuilder:
         st.macd_hist_prev = macd_hist
 
         vol_ma5 = self._sma(volumes, 5)
-        vol_ratio_vs5 = 0.0 if vol_ma5 == 0 else float(tick.volume) / vol_ma5
+        vol_ratio_vs5 = 0.0 if vol_ma5 == 0 else float(inc_vol) / vol_ma5
 
         mom_1m = self._momentum_pct(prices, 1)
         mom_3m = self._momentum_pct(prices, 3)

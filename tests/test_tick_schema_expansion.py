@@ -171,7 +171,7 @@ def test_fugle_handle_message_maps_new_fields() -> None:
 
     assert len(ticks) == 3
     first, second, third = ticks
-    assert first.volume == 3  # keep existing lots conversion
+    assert first.volume == 12345  # cum_volume diff: 12345 - 0 (first tick)
     assert first.size == 3000
     assert first.cum_volume == 12345
     assert first.tick_type == 1
@@ -179,6 +179,7 @@ def test_fugle_handle_message_maps_new_fields() -> None:
 
     assert second.size == 1000
     assert second.cum_volume == 0
+    assert second.volume == 0   # no volume field in message → quote-only tick
     assert second.tick_type == 0
     assert second.serial == 0
 

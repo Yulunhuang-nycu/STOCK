@@ -31,6 +31,7 @@ class FugleFeed(MarketDataFeed):
         self._stop_event = threading.Event()
         self._reconnect_timer: threading.Timer | None = None
         self._lock = threading.Lock()
+        self._prev_cum_vol: dict[str, int] = {}  # per-symbol last cum_volume for diff
 
     def subscribe(self, symbols: list[str]) -> None:
         self._symbols = list(symbols)
@@ -126,15 +127,24 @@ class FugleFeed(MarketDataFeed):
             else:
                 tick_type = TICK_TYPE_UNKNOWN
 
+            symbol = str(data["symbol"])
+            cum_vol = int(data.get("volume", 0) or 0)
+            prev_cum = self._prev_cum_vol.get(symbol, 0)
+            if cum_vol > 0:
+                inc_vol = max(0, cum_vol - prev_cum)
+                self._prev_cum_vol[symbol] = cum_vol
+            else:
+                inc_vol = 0  # quote-only tick: no trade volume, don't reset tracker
+
             tick = Tick(
-                symbol=str(data["symbol"]),
+                symbol=symbol,
                 ts=ts,
                 price=float(data["price"]),
-                volume=int(data["size"] / 1000),
+                volume=inc_vol,
                 bid=float(data.get("bid", 0.0) or 0.0),
                 ask=float(data.get("ask", 0.0) or 0.0),
                 size=int(data.get("size", 0) or 0),
-                cum_volume=int(data.get("volume", 0) or 0),
+                cum_volume=cum_vol,
                 tick_type=tick_type,
                 serial=int(data.get("serial", 0) or 0),
             )

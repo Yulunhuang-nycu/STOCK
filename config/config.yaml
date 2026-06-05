@@ -133,7 +133,7 @@ executor:
   type: dryrun                 # dryrun | paper | notify | broker
 
 data_feed:
-  type: fugle_live                   # fake | fugle_live | fugle_live_multi | replay
+  type: fugle_live_multi                   # fake | fugle_live | fugle_live_multi | replay
   fake:
     tick_interval_ms: 200
     seed: 42
