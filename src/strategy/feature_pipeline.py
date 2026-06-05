@@ -206,6 +206,7 @@ class FeaturePipeline:
                 volume=int(row.volume),
                 bid=float(getattr(row, "bid", 0.0)),
                 ask=float(getattr(row, "ask", 0.0)),
+                cum_volume=int(getattr(row, "cum_volume", 0) or 0),
             )
             feats = fb.update(tick)
             if feats is None:
